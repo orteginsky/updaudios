@@ -1,0 +1,40 @@
+# Entorno virtual
+.venv/
+
+# Variables de entorno con credenciales reales
+.env
+
+# Credenciales OAuth
+credentials/
+token.json
+
+# Caché de Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Scripts locales (no forman parte del pipeline Docker)
+audios_nombres.py
+audios_path_dropbox.py
+auditoria_fase_n.py
+cruce.py
+dropbox_clean_analysis.py
+migrar_audios_dropbox.py
+test.py
+
+# CSVs locales (el pipeline los genera en output/)
+*.csv
+
+# Outputs previos
+output/
+
+# Git
+.git/
+.gitignore
+
+# Claude
+.claude/
+
+# Docs
+*.md

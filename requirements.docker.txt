@@ -1,0 +1,30 @@
+# =============================================================================
+# requirements.docker.txt — Dependencias del contenedor Docker
+# Se excluyen: pandas, google-cloud-storage y todas las librerías de GCS.
+# =============================================================================
+
+# Data processing
+polars==1.38.1
+
+# Database
+SQLAlchemy==2.0.46
+psycopg2-binary==2.9.11
+asyncpg==0.31.0
+
+# HTTP / Dropbox API
+httpx==0.28.1
+
+# Configuration
+python-dotenv==1.2.1
+pydantic==2.12.5
+pydantic-settings==2.13.1
+
+# Text normalization
+Unidecode==1.4.0
+
+# Name matching
+thefuzz==0.22.1
+RapidFuzz==3.14.3
+
+# Legal name cleaner (from GitHub)
+legal-data-cleaner @ git+https://github.com/lortegamendozafirm/legal-data-cleaner.git

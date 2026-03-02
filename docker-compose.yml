@@ -1,0 +1,20 @@
+services:
+  pipeline:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: .env
+    volumes:
+      # Archivos de audio del servidor (solo lectura)
+      # AUDIOS_HOST_DIR debe definirse en .env con la ruta real del host
+      - ${AUDIOS_HOST_DIR}:/audios:ro
+
+      # CSVs intermedios y reportes de salida (lectura/escritura)
+      - ./output:/app/output
+
+    # El contenedor se detiene al terminar; no reinicia automáticamente
+    restart: "no"
+
+    # Muestra los logs en tiempo real sin buffering
+    environment:
+      PYTHONUNBUFFERED: "1"
