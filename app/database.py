@@ -24,8 +24,8 @@ engine = create_async_engine(
     settings.database_url,
     echo=False,
     future=True,
-    pool_size=10,       # Antes era 5. Ahora mantenemos 10 vivas.
-    max_overflow=10,    # Antes era 5. Ahora permitimos picos de hasta 20 conexiones.
+    pool_size=10,
+    max_overflow=10,
     pool_timeout=30,
     pool_recycle=1800,
     pool_pre_ping=True

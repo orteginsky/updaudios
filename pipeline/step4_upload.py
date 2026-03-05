@@ -1,8 +1,12 @@
 """
-Step 4: Sube los audios locales a la subcarpeta 'Recordings' del cliente en Dropbox.
+Step 4: Sube los audios locales a la subcarpeta 'Psychology' (dentro de 'Recordings')
+        del cliente en Dropbox.
 
-Lee los archivos de audio desde el sistema de archivos local (montado como volumen
-en Docker). La ruta física proviene de las columnas 'path' y 'file_name' del CSV.
+Flujo de destino por audio:
+  1. Carpeta del cliente  (path_display de step 3)
+  2. → subcarpeta con 'recording' en el nombre
+  3. → subcarpeta con 'psy', 'pys' o 'psi' en el nombre (psychology)
+       Si no existe, se crea como 'PSYCHOLOGY'
 
 Entradas:
   - output/mapeo_audios_con_urls.csv  (path_display, file_name, path, ...)
@@ -124,6 +128,49 @@ async def obtener_subcarpeta_con_recordings(token: str, path_display: str, names
     return None
 
 
+_PSY_KEYWORDS = ("psy", "pys", "psi")
+
+
+async def obtener_o_crear_carpeta_psychology(token: str, recordings_path: str, namespace_id: str | None) -> str:
+    """Busca dentro de 'recordings' una subcarpeta que contenga psy/pys/psi.
+    Si no existe la crea como 'PSYCHOLOGY' y devuelve su path_display."""
+    endpoint_list = "https://api.dropboxapi.com/2/files/list_folder"
+    endpoint_continue = "https://api.dropboxapi.com/2/files/list_folder/continue"
+    headers = _build_headers(token, namespace_id)
+
+    target = recordings_path.strip().rstrip("/")
+    response = await _dropbox_post(endpoint_list, json={"path": target, "recursive": False}, headers=headers)
+    response.raise_for_status()
+    data = response.json()
+
+    while True:
+        for entry in data.get("entries", []):
+            if entry.get(".tag") == "folder":
+                if any(kw in entry.get("name", "").lower() for kw in _PSY_KEYWORDS):
+                    found = entry.get("path_display")
+                    print(f"  🔍  Carpeta Psychology encontrada: {found}")
+                    return found
+
+        if not data.get("has_more"):
+            break
+
+        cursor = data["cursor"]
+        response = await _dropbox_post(endpoint_continue, json={"cursor": cursor}, headers=headers)
+        response.raise_for_status()
+        data = response.json()
+
+    # No existe: crear PSYCHOLOGY
+    nueva_path = f"{target}/PSYCHOLOGY"
+    print(f"  📁  Carpeta Psychology no encontrada. Creando: {nueva_path}")
+    resp = await _dropbox_post(
+        "https://api.dropboxapi.com/2/files/create_folder_v2",
+        json={"path": nueva_path, "autorename": False},
+        headers=_build_headers(token, namespace_id),
+    )
+    resp.raise_for_status()
+    return resp.json().get("metadata", {}).get("path_display", nueva_path)
+
+
 async def subir_a_dropbox(token: str, destino_path: str, nombre_archivo: str, contenido: bytes, namespace_id: str | None) -> dict:
     """Sube un archivo a Dropbox vía la API de contenido."""
     endpoint = "https://content.dropboxapi.com/2/files/upload"
@@ -158,7 +205,8 @@ async def _main():
     namespace_id = await obtener_namespace(token)
     print()
 
-    cache_subcarpetas: dict[str, str | None] = {}
+    # Cache: path_display del cliente → path_display de la carpeta PSYCHOLOGY final
+    cache_destino: dict[str, str | None] = {}
     resultados = []
 
     for i, row in enumerate(df_lote.to_dicts(), start=1):
@@ -180,25 +228,30 @@ async def _main():
             resultados.append({**row, "estado": "no_encontrado_local", "destino_dropbox": None})
             continue
 
-        # Obtener subcarpeta destino en Dropbox (con caché por path_display)
-        if path_display not in cache_subcarpetas:
+        # Resolver carpeta destino final (Recordings → Psychology) con caché
+        if path_display not in cache_destino:
             try:
-                subcarpeta = await obtener_subcarpeta_con_recordings(token, path_display, namespace_id)
+                recordings = await obtener_subcarpeta_con_recordings(token, path_display, namespace_id)
+                if recordings:
+                    destino_final = await obtener_o_crear_carpeta_psychology(token, recordings, namespace_id)
+                else:
+                    destino_final = None
             except httpx.HTTPStatusError as e:
                 if e.response.status_code == 401:
                     token = await auth_service.get_valid_token(force_refresh=True)
-                    subcarpeta = await obtener_subcarpeta_con_recordings(token, path_display, namespace_id)
+                    recordings = await obtener_subcarpeta_con_recordings(token, path_display, namespace_id)
+                    destino_final = await obtener_o_crear_carpeta_psychology(token, recordings, namespace_id) if recordings else None
                 else:
                     raise
             except httpx.ConnectError as e:
                 print(f"  ❌ Sin conexión al listar carpeta: {e}")
                 resultados.append({**row, "estado": "error_red", "destino_dropbox": None})
                 continue
-            cache_subcarpetas[path_display] = subcarpeta
+            cache_destino[path_display] = destino_final
 
-        subcarpeta = cache_subcarpetas[path_display]
+        destino_final = cache_destino[path_display]
 
-        if not subcarpeta:
+        if not destino_final:
             print(f"  ⚠️  Sin subcarpeta 'Recordings' en: {path_display}")
             resultados.append({**row, "estado": "sin_subcarpeta_recordings", "destino_dropbox": None})
             continue
@@ -208,10 +261,10 @@ async def _main():
         with open(local_path, "rb") as f:
             contenido = f.read()
 
-        # Subir a Dropbox
-        print(f"  ⬆️  Subiendo a Dropbox: {subcarpeta}")
+        # Subir a la carpeta Psychology
+        print(f"  ⬆️  Subiendo a Dropbox: {destino_final}")
         try:
-            resultado_upload = await subir_a_dropbox(token, subcarpeta, nombre_audio, contenido, namespace_id)
+            resultado_upload = await subir_a_dropbox(token, destino_final, nombre_audio, contenido, namespace_id)
             destino = resultado_upload.get("path_display")
             print(f"  ✅ Subido: {destino}")
             resultados.append({**row, "estado": "subido", "destino_dropbox": destino})
@@ -222,7 +275,7 @@ async def _main():
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 401:
                 token = await auth_service.get_valid_token(force_refresh=True)
-                resultado_upload = await subir_a_dropbox(token, subcarpeta, nombre_audio, contenido, namespace_id)
+                resultado_upload = await subir_a_dropbox(token, destino_final, nombre_audio, contenido, namespace_id)
                 destino = resultado_upload.get("path_display")
                 print(f"  ✅ Subido (token renovado): {destino}")
                 resultados.append({**row, "estado": "subido", "destino_dropbox": destino})

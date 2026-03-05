@@ -15,13 +15,12 @@ __pycache__/
 *.pyd
 
 # Scripts locales (no forman parte del pipeline Docker)
-audios_nombres.py
-audios_path_dropbox.py
-auditoria_fase_n.py
-cruce.py
-dropbox_clean_analysis.py
-migrar_audios_dropbox.py
-test.py
+.venv
+audios_de_prueba
+credentials
+csv_from_scripts
+Documentacion
+scripts
 
 # CSVs locales (el pipeline los genera en output/)
 *.csv
@@ -38,3 +37,6 @@ output/
 
 # Docs
 *.md
+
+# Secretos
+*.json

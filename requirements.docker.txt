@@ -8,8 +8,10 @@ polars==1.38.1
 
 # Database
 SQLAlchemy==2.0.46
-psycopg2-binary==2.9.11
-asyncpg==0.31.0
+psycopg2-binary==2.9.11   # para db_dropbox (PostgreSQL)
+asyncpg==0.31.0           # para db_dropbox (async)
+PyMySQL==1.1.1            # para db_it (MySQL 8.4)
+cryptography==44.0.2      # requerido por PyMySQL para caching_sha2_password (MySQL 8.x)
 
 # HTTP / Dropbox API
 httpx==0.28.1

@@ -121,7 +121,7 @@ def run() -> None:
         .sort("count", descending=True)
     )
     _save_csv(grouped, 6, "grouped_counts")
-    vc = grouped["count"].value_counts().sort("count")
+    vc = grouped["count"].alias("n").value_counts().sort("count")
     print(f"     Distribución de conteos:\n{vc}")
 
     # Paso 7 – Filtrado por umbral

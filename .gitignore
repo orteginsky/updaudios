@@ -1,4 +1,34 @@
-.claude
-.venv
-output
+# ── Entorno y secretos ────────────────────────────────────────────────────────
 .env
+token.json
+credentials/
+
+# ── Python ────────────────────────────────────────────────────────────────────
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# ── Datos generados (no subir al repo) ────────────────────────────────────────
+output/
+csv_from_scripts/
+audios_de_prueba/
+
+# ── Base de datos Dropbox (volcado puede ser muy grande y contiene datos de clientes) ──
+backup_dropbox.sql
+db_dropbox_init/backup_dropbox.sql
+db_it_init
+
+# ── Sesión de Claude Code ─────────────────────────────────────────────────────
+.claude/
+
+# ── Documentación local / trabajo en progreso ─────────────────────────────────
+Documentacion/
+
+# ── Sistema operativo ─────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db

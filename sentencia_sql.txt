@@ -1,7 +1,7 @@
 SELECT ruta_llamada AS path, nombre_archivo AS file_name, nombre_cliente AS name
-FROM mendoza_box.audios_descargados AS audios, RH.usuarios AS filtro 
-WHERE audios.id_user = filtro.id_user 
-AND filtro.area= 'PSYCHOLOGY' 
-AND (audios.nombre_cliente != '' OR audios.nombre_cliente IS NOT NULL) 
+FROM mendoza_box.audios_descargados AS audios, RH.usuarios AS filtro
+WHERE audios.id_user = filtro.id_user
+AND filtro.area= 'PSYCHOLOGY'
+AND (audios.nombre_cliente != '' OR audios.nombre_cliente IS NOT NULL)
 AND audios.duracion >= '00:00:50'
-LIMIT 10;
+LIMIT 1;
