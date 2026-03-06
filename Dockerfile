@@ -25,9 +25,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # ── Código fuente ─────────────────────────────────────────────────────────────
 COPY app/          ./app/
-COPY pipeline/     ./pipeline/
-COPY main.py       ./
-COPY sentencia_sql.txt ./
 
 # ── Directorios de volúmenes ──────────────────────────────────────────────────
 # /app/output → CSVs intermedios y reportes finales  (volumen de salida)
@@ -35,4 +32,4 @@ COPY sentencia_sql.txt ./
 RUN mkdir -p /app/output /audios
 
 # ── Entrypoint ────────────────────────────────────────────────────────────────
-ENTRYPOINT ["python", "main.py"]
+ENTRYPOINT ["python", "app/main.py"]

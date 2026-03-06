@@ -76,7 +76,7 @@ def main() -> None:
     _banner("PIPELINE DE MIGRACIÓN DE AUDIOS A DROPBOX")
 
     # Importaciones aquí para que los errores de módulo sean claros
-    from pipeline import (
+    from app.pipeline import (
         step0_audios,
         step1_dropbox,
         step2_cruce,
