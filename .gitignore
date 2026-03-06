@@ -21,7 +21,12 @@ audios_de_prueba/
 # ── Base de datos Dropbox (volcado puede ser muy grande y contiene datos de clientes) ──
 backup_dropbox.sql
 db_dropbox_init/backup_dropbox.sql
-db_it_init
+01_CREACION_DE_TABLAS.sql
+02_user_sql.sql
+03_audios.sql
+db_it_init/01_CREACION_DE_TABLAS.sql
+db_it_init/02_user_sql.sql
+db_it_init/03_audios.sql
 
 # ── Sesión de Claude Code ─────────────────────────────────────────────────────
 .claude/
