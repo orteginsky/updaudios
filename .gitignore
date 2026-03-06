@@ -40,3 +40,5 @@ Thumbs.db
 
 # ── Otras cosas ───────────────────────────────────────────────────────────────
 credentials
+scripts/
+scripts
