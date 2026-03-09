@@ -32,4 +32,4 @@ COPY app/          ./app/
 RUN mkdir -p /app/output /audios
 
 # ── Entrypoint ────────────────────────────────────────────────────────────────
-ENTRYPOINT ["python", "app/main.py"]
+ENTRYPOINT ["python", "-m", "app.main"]
