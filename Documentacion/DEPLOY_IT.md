@@ -31,12 +31,12 @@ Copiar `.env` y ajustar los siguientes valores:
 
 ```env
 # ── Credenciales para los contenedores PostgreSQL ─────────────────────────────
-DB_USER=<usuario_postgres>
-DB_PASS=<contraseña_postgres>
+DB_USER=user
+DB_PASS=pass
 
 # ── Base de datos 1: índice de Dropbox (PostgreSQL) ───────────────────────────
 # Cambiar host al servidor donde corra la DB de Dropbox
-DB_URL=postgresql+psycopg2://<usuario>:<contraseña>@<host_db_dropbox>:5432/dropbox_index
+DB_URL=postgresql+psycopg2://user:pass@db_dropbox:5432/dropbox_index
 
 # ── Base de datos 2: registros de audios (MySQL 8.4 del servidor de IT) ───────
 # Apuntar directamente al MySQL del servidor — ya NO se levanta contenedor
@@ -44,7 +44,7 @@ AUDIOS_DB_URL=mysql+pymysql://<usuario>:<contraseña>@<host_mysql_IT>:3306/mendo
 
 # ── Autenticación Dropbox ──────────────────────────────────────────────────────
 TOKEN_SERVICE_URL=https://accesstokendropbox-223080314602.us-central1.run.app
-API_SECRET_KEY=<clave_secreta>
+API_SECRET_KEY=930xY0dJ0pD
 
 # ── Rutas de audios en el servidor ────────────────────────────────────────────
 # Ruta real en el host donde están los audios
@@ -63,7 +63,7 @@ REPEAT_THRESHOLD=3
 ### 2. Archivo `docker-compose.yaml`
 
 En producción, la DB de IT ya existe en el servidor de IT — **no levantar ese contenedor**.
-Solo se necesitan: `db_dropbox` (si no existe ya) y `app`.
+Solo se necesitan: `db_dropbox` y `app`.
 
 Versión simplificada para producción:
 
@@ -107,22 +107,6 @@ services:
 > **Nota:** Si la DB de Dropbox ya está corriendo en otro servidor,
 > eliminar el servicio `db_dropbox` del yaml y actualizar `DB_URL` en `.env`
 > para apuntar a esa instancia.
-
----
-
-### 3. Archivo `app/sentencia_sql.txt`
-
-Para producción: **remover el `LIMIT 10`** y cambiar el filtro de área si aplica.
-
-```sql
-SELECT ruta_llamada AS path, nombre_archivo AS file_name, nombre_cliente AS name
-FROM mendoza_box.audios_descargados AS audios, RH.usuarios AS filtro
-WHERE audios.id_user = filtro.id_user
-AND filtro.area = 'PSYCHOLOGY'
-AND audios.nombre_cliente IS NOT NULL
-AND audios.nombre_cliente != ''
-AND audios.duracion >= '00:00:50';
-```
 
 ---
 

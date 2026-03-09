@@ -3,5 +3,4 @@ FROM mendoza_box.audios_descargados AS audios, RH.usuarios AS filtro
 WHERE audios.id_user = filtro.id_user
 AND filtro.area= 'PSYCHOLOGY'
 AND (audios.nombre_cliente != '' OR audios.nombre_cliente IS NOT NULL)
-AND audios.duracion >= '00:00:50'
-LIMIT 1;
+AND audios.duracion >= '00:00:50';
