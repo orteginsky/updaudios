@@ -38,23 +38,21 @@ updaudios/
 ├── Dockerfile                   # Imagen de la app Python
 ├── .env                         # Variables de entorno (no commitear)
 ├── .env.example                 # Plantilla de variables
-├── sentencia_sql.txt            # Query SQL para extraer audios de IT
 ├── requirements.docker.txt      # Dependencias del contenedor
 │
-├── app/
+├── app/                         # Todo el código Python del contenedor
 │   ├── auth_service.py          # Cliente del microservicio de tokens Dropbox
 │   ├── config.py                # Configuración centralizada (pydantic-settings)
-│   └── database.py              # Modelos y motor async (SQLAlchemy) para db_dropbox
-│
-├── pipeline/
-│   ├── step0_audios.py          # Extrae audios de la DB de IT
-│   ├── step1_dropbox.py         # Analiza y limpia carpetas de Dropbox
-│   ├── step2_cruce.py           # Cruza nombres audio ↔ cliente (3 fases)
-│   ├── step3_paths.py           # Resuelve path_display en Dropbox
-│   ├── step4_upload.py          # Sube audios a Dropbox
-│   └── step5_audit.py           # Genera reporte de faltantes
-│
-├── main.py                      # Orquestador del pipeline
+│   ├── database.py              # Modelos y motor async (SQLAlchemy) para db_dropbox
+│   ├── main.py                  # Orquestador del pipeline
+│   ├── sentencia_sql.txt        # Query SQL para extraer audios de IT
+│   └── pipeline/
+│       ├── step0_audios.py      # Extrae audios de la DB de IT
+│       ├── step1_dropbox.py     # Analiza y limpia carpetas de Dropbox
+│       ├── step2_cruce.py       # Cruza nombres audio ↔ cliente (3 fases)
+│       ├── step3_paths.py       # Resuelve path_display en Dropbox
+│       ├── step4_upload.py      # Sube audios a Dropbox
+│       └── step5_audit.py       # Genera reporte de faltantes
 │
 ├── db_dropbox_init/
 │   ├── 00_prereq.sql            # Crea roles de Cloud SQL para compatibilidad local
@@ -65,6 +63,19 @@ updaudios/
 │   ├── 02_user_sql.sql
 │   └── 03_audios.sql
 │
+├── Documentacion/               # Documentación del proyecto
+│   ├── DEPLOY_IT.md             # Guía de despliegue para el equipo de IT
+│   ├── context.md
+│   └── plan.md
+│
+├── scripts/                     # Scripts auxiliares / análisis ad-hoc
+│   ├── dropbox_clean_analysis.py
+│   ├── cruce.py
+│   ├── audios_nombres.py
+│   ├── audios_path_dropbox.py
+│   ├── auditoria_fase_n.py
+│   └── migrar_audios_dropbox.py
+│
 └── audios_de_prueba/            # Audios ficticios para pruebas locales
 ```
 
@@ -74,12 +85,12 @@ updaudios/
 
 | Step | Archivo | Entrada | Salida |
 |------|---------|---------|--------|
-| 0 | `step0_audios.py` | DB MySQL IT | `audios_sql.csv` |
-| 1 | `step1_dropbox.py` | DB PostgreSQL Dropbox | `08_final_output.csv` |
-| 2 | `step2_cruce.py` | CSVs steps 0 y 1 | `mapeo_audios.csv` |
-| 3 | `step3_paths.py` | Mapeo + DB Dropbox | `mapeo_audios_con_urls.csv` |
-| 4 | `step4_upload.py` | Mapeo con URLs + archivos locales | `resultado_migracion_audios.csv` |
-| 5 | `step5_audit.py` | CSVs steps 0 y 2 | `dismatch_clientes_message.csv` |
+| 0 | `app/pipeline/step0_audios.py` | DB MySQL IT | `audios_sql.csv` |
+| 1 | `app/pipeline/step1_dropbox.py` | DB PostgreSQL Dropbox | `08_final_output.csv` |
+| 2 | `app/pipeline/step2_cruce.py` | CSVs steps 0 y 1 | `mapeo_audios.csv` |
+| 3 | `app/pipeline/step3_paths.py` | Mapeo + DB Dropbox | `mapeo_audios_con_urls.csv` |
+| 4 | `app/pipeline/step4_upload.py` | Mapeo con URLs + archivos locales | `resultado_migracion_audios.csv` |
+| 5 | `app/pipeline/step5_audit.py` | CSVs steps 0 y 2 | `dismatch_clientes_message.csv` |
 
 ### Cruce de nombres (Step 2) — 3 fases
 
@@ -199,7 +210,7 @@ Ejecutado con 10 audios de muestra del colaborador ARTURO RODRIGUEZ ISLAS:
 
 ## Despliegue en producción
 
-Ver `DEPLOY_IT.md` para la guía completa dirigida al equipo de IT, incluyendo:
+Ver `Documentacion/DEPLOY_LOCAL.md` para la guía de pruebas en local y `Documentacion/DEPLOY_IT.md` para la guía completa dirigida al equipo de IT, incluyendo:
 - Cambios necesarios en `.env` y `docker-compose.yaml`
 - Query SQL de producción (sin `LIMIT`)
 - Consideraciones sobre re-ejecuciones y duplicados
