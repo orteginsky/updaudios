@@ -12,9 +12,6 @@ Entradas:
   - output/mapeo_audios_con_urls.csv  (path_display, file_name, path, ...)
   - Archivos de audio en el volumen montado
 
-Variables de entorno para el mapeo de rutas:
-  AUDIOS_HOST_PREFIX  Prefijo de ruta en el host a sustituir (ej: /var/www/html/FILES/descarga_audios)
-  AUDIOS_MOUNT        Punto de montaje en el contenedor          (ej: /audios)
 
 Salida: output/resultado_migracion_audios.csv
 """
@@ -27,9 +24,7 @@ import polars as pl
 from app.auth_service import auth_service
 
 OUTPUT_DIR = os.getenv("OUTPUT_DIR", "output")
-AUDIOS_HOST_PREFIX = os.getenv("AUDIOS_HOST_PREFIX", "")
-AUDIOS_MOUNT = os.getenv("AUDIOS_MOUNT", "/audios")
-LIMIT = int(os.getenv("LIMIT", "50"))
+LIMIT = int(os.getenv("LIMIT", "0"))  # 0 = sin límite
 MAX_REINTENTOS = 3
 ESPERA_REINTENTO = 5
 
@@ -38,10 +33,7 @@ PATH_OUTPUT = os.path.join(OUTPUT_DIR, "resultado_migracion_audios.csv")
 
 
 def get_local_audio_path(directory: str, file_name: str) -> str:
-    """Construye la ruta del archivo dentro del contenedor."""
-    if AUDIOS_HOST_PREFIX and directory.startswith(AUDIOS_HOST_PREFIX):
-        relative = directory[len(AUDIOS_HOST_PREFIX):].lstrip("/")
-        directory = os.path.join(AUDIOS_MOUNT, relative)
+    """Construye la ruta del archivo usando la ruta provista por la base de datos de IT."""
     return os.path.join(directory, file_name)
 
 
@@ -194,7 +186,7 @@ async def subir_a_dropbox(token: str, destino_path: str, nombre_archivo: str, co
 async def _main():
     print("[Step 4] Cargando CSV de mapeo...")
     df = pl.read_csv(PATH_INPUT)
-    df_lote = df.head(LIMIT)
+    df_lote = df.head(LIMIT) if LIMIT > 0 else df
     total = df_lote.height
     print(f"     Procesando {total} audios.\n")
 
