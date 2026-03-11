@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
 
   # ── Base de Datos 1: índice de Dropbox (50 TB) ────────────────────────────
@@ -12,7 +10,7 @@ services:
     volumes:
       - ./db_dropbox_init:/docker-entrypoint-initdb.d/
     ports:
-      - "5433:5432"
+      - "5435:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U ${DB_USER} -d dropbox_index"]
       interval: 10s
@@ -20,23 +18,6 @@ services:
       retries: 5
       start_period: 90s
 
-  # ── Base de Datos 2: registros de audios/llamadas (IT) — MySQL 8.4 ─────────
-  db_it:
-    image: mysql:8.4
-    environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASS}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASS}
-      MYSQL_DATABASE: mendoza_box
-    volumes:
-      - ./db_it_init:/docker-entrypoint-initdb.d/
-    ports:
-      - "5434:3306"
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-p${DB_PASS}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   # ── Aplicación Python: pipeline de migración ─────────────────────────────
   app:
@@ -46,10 +27,9 @@ services:
     depends_on:
       db_dropbox:
         condition: service_healthy
-      db_it:
-        condition: service_healthy
     env_file:
       - .env
     volumes:
-      - ./audios_de_prueba:/audios         # Simulación del servidor de audios
+      - /var/www/html/FILES/descarga_audios:/var/www/html/FILES/descarga_audios
+      - /home/storage/FILES/descarga_audios:/home/storage/FILES/descarga_audios
       - ./output:/app/output               # CSVs de salida accesibles desde el host
