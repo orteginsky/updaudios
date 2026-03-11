@@ -186,7 +186,7 @@ async def subir_a_dropbox(token: str, destino_path: str, nombre_archivo: str, co
 async def _main():
     print("[Step 4] Cargando CSV de mapeo...")
     df = pl.read_csv(PATH_INPUT)
-    df_lote = df.head(LIMIT) if LIMIT > 0 else df
+    df_lote = df
     total = df_lote.height
     print(f"     Procesando {total} audios.\n")
 
