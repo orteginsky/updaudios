@@ -53,6 +53,12 @@ async def _dropbox_post(url: str, **kwargs) -> httpx.Response:
                     print(f"  ⏳  Rate limit 429, esperando {wait}s (intento {intento}/{MAX_REINTENTOS})...")
                     await asyncio.sleep(wait)
                     continue
+                if resp.status_code >= 500:
+                    ultima_resp = resp
+                    wait = min(2 ** intento * ESPERA_REINTENTO, 300)
+                    print(f"  ⚠️  Error servidor {resp.status_code}, reintentando en {wait}s (intento {intento}/{MAX_REINTENTOS})...")
+                    await asyncio.sleep(wait)
+                    continue
                 return resp
         except httpx.ConnectError as e:
             ultimo_error = e
@@ -61,7 +67,7 @@ async def _dropbox_post(url: str, **kwargs) -> httpx.Response:
                 await asyncio.sleep(ESPERA_REINTENTO)
     if ultimo_error:
         raise httpx.ConnectError(f"Sin conexión tras {MAX_REINTENTOS} intentos: {ultimo_error}")
-    # 429 persistente tras todos los reintentos
+    # 429 o 5xx persistente tras todos los reintentos
     ultima_resp.raise_for_status()
 
 
