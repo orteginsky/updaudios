@@ -25,7 +25,7 @@ from app.auth_service import auth_service
 
 OUTPUT_DIR = os.getenv("OUTPUT_DIR", "output")
 LIMIT = int(os.getenv("LIMIT", "0"))  # 0 = sin límite
-MAX_REINTENTOS = 3
+MAX_REINTENTOS = 5
 ESPERA_REINTENTO = 5
 
 PATH_INPUT = os.path.join(OUTPUT_DIR, "mapeo_audios_con_urls.csv")
@@ -38,18 +38,31 @@ def get_local_audio_path(directory: str, file_name: str) -> str:
 
 
 async def _dropbox_post(url: str, **kwargs) -> httpx.Response:
-    """POST a la API de Dropbox con reintentos ante fallos de red."""
+    """POST a la API de Dropbox con reintentos ante fallos de red y rate limiting (429)."""
+    timeout = kwargs.pop("timeout", 30.0)
     ultimo_error = None
+    ultima_resp = None
     for intento in range(1, MAX_REINTENTOS + 1):
         try:
-            async with httpx.AsyncClient(timeout=kwargs.pop("timeout", 30.0)) as client:
-                return await client.post(url, **kwargs)
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                resp = await client.post(url, **kwargs)
+                if resp.status_code == 429:
+                    ultima_resp = resp
+                    retry_after = int(resp.headers.get("Retry-After", 0))
+                    wait = retry_after if retry_after > 0 else min(2 ** intento * ESPERA_REINTENTO, 300)
+                    print(f"  ⏳  Rate limit 429, esperando {wait}s (intento {intento}/{MAX_REINTENTOS})...")
+                    await asyncio.sleep(wait)
+                    continue
+                return resp
         except httpx.ConnectError as e:
             ultimo_error = e
             if intento < MAX_REINTENTOS:
                 print(f"  ⚠️  Error de red (intento {intento}/{MAX_REINTENTOS}), reintentando en {ESPERA_REINTENTO}s...")
                 await asyncio.sleep(ESPERA_REINTENTO)
-    raise httpx.ConnectError(f"Sin conexión tras {MAX_REINTENTOS} intentos: {ultimo_error}")
+    if ultimo_error:
+        raise httpx.ConnectError(f"Sin conexión tras {MAX_REINTENTOS} intentos: {ultimo_error}")
+    # 429 persistente tras todos los reintentos
+    ultima_resp.raise_for_status()
 
 
 async def obtener_namespace(token: str) -> str | None:
@@ -186,9 +199,21 @@ async def subir_a_dropbox(token: str, destino_path: str, nombre_archivo: str, co
 async def _main():
     print("[Step 4] Cargando CSV de mapeo...")
     df = pl.read_csv(PATH_INPUT)
-    df_lote = df
-    total = df_lote.height
-    print(f"     Procesando {total} audios.\n")
+    total = df.height
+    print(f"     Total de audios en mapeo: {total}")
+
+    # Cargar checkpoint previo para reanudar sin re-subir lo ya procesado
+    ya_subidos: set[str] = set()
+    if os.path.exists(PATH_OUTPUT):
+        df_prev = pl.read_csv(PATH_OUTPUT)
+        ya_subidos = set(df_prev.filter(pl.col("estado") == "subido")["file_name"].to_list())
+        resultados = df_prev.to_dicts()
+        print(f"     Checkpoint encontrado: {len(ya_subidos)} audios ya subidos, retomando...")
+    else:
+        resultados = []
+
+    pendientes = total - len(ya_subidos)
+    print(f"     Pendientes de subir: {pendientes}\n")
 
     # Obtener token y namespace de Dropbox
     print("     Obteniendo token Dropbox...")
@@ -199,11 +224,13 @@ async def _main():
 
     # Cache: path_display del cliente → path_display de la carpeta PSYCHOLOGY final
     cache_destino: dict[str, str | None] = {}
-    resultados = []
 
-    for i, row in enumerate(df_lote.to_dicts(), start=1):
+    for i, row in enumerate(df.to_dicts(), start=1):
         nombre_audio = row["file_name"]
         path_display = row["path_display"]
+
+        if nombre_audio in ya_subidos:
+            continue
 
         print(f"[{i}/{total}] {nombre_audio}")
 
