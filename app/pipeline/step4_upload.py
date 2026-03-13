@@ -18,18 +18,26 @@ Salida: output/resultado_migracion_audios.csv
 import asyncio
 import json
 import os
+import time
 
 import httpx
 import polars as pl
 from app.auth_service import auth_service
 
 OUTPUT_DIR = os.getenv("OUTPUT_DIR", "output")
-LIMIT = int(os.getenv("LIMIT", "0"))  # 0 = sin límite
+LIMIT = int(os.getenv("LIMIT", "0"))            # 0 = sin límite
+DRY_RUN = os.getenv("DRY_RUN", "false").lower() == "true"
 MAX_REINTENTOS = 5
 ESPERA_REINTENTO = 5
+MAX_REINTENTOS_PASO = 10                        # reintentos del step completo
+ESPERA_PASO = 300                               # segundos entre reintentos del step (5 min)
+PAUSA_CADA_N = int(os.getenv("PAUSA_CADA_N", "50"))   # pausa cada N peticiones a Dropbox
+PAUSA_SEGUNDOS = int(os.getenv("PAUSA_SEGUNDOS", "60"))  # duración de la pausa (seg)
 
 PATH_INPUT = os.path.join(OUTPUT_DIR, "mapeo_audios_con_urls.csv")
 PATH_OUTPUT = os.path.join(OUTPUT_DIR, "resultado_migracion_audios.csv")
+
+_peticiones_dropbox = 0  # contador global para pausa periódica
 
 
 def get_local_audio_path(directory: str, file_name: str) -> str:
@@ -38,7 +46,12 @@ def get_local_audio_path(directory: str, file_name: str) -> str:
 
 
 async def _dropbox_post(url: str, **kwargs) -> httpx.Response:
-    """POST a la API de Dropbox con reintentos ante fallos de red y rate limiting (429)."""
+    """POST a la API de Dropbox con reintentos ante fallos de red y rate limiting (429).
+
+    Captura toda la jerarquía httpx.TransportError (ConnectError, RemoteProtocolError,
+    ReadError, WriteError, TimeoutException, etc.) para no dejar errores sin atrapar.
+    """
+    global _peticiones_dropbox
     timeout = kwargs.pop("timeout", 30.0)
     ultimo_error = None
     ultima_resp = None
@@ -46,6 +59,13 @@ async def _dropbox_post(url: str, **kwargs) -> httpx.Response:
         try:
             async with httpx.AsyncClient(timeout=timeout) as client:
                 resp = await client.post(url, **kwargs)
+
+                # Pausa periódica para no saturar la API
+                _peticiones_dropbox += 1
+                if PAUSA_CADA_N > 0 and _peticiones_dropbox % PAUSA_CADA_N == 0:
+                    print(f"  ⏸️  Pausa periódica tras {_peticiones_dropbox} peticiones ({PAUSA_SEGUNDOS}s)...")
+                    await asyncio.sleep(PAUSA_SEGUNDOS)
+
                 if resp.status_code == 429:
                     ultima_resp = resp
                     retry_after = int(resp.headers.get("Retry-After", 0))
@@ -60,13 +80,15 @@ async def _dropbox_post(url: str, **kwargs) -> httpx.Response:
                     await asyncio.sleep(wait)
                     continue
                 return resp
-        except httpx.ConnectError as e:
+        except httpx.TransportError as e:
+            # Cubre ConnectError, RemoteProtocolError, ReadError, WriteError, TimeoutException
             ultimo_error = e
             if intento < MAX_REINTENTOS:
-                print(f"  ⚠️  Error de red (intento {intento}/{MAX_REINTENTOS}), reintentando en {ESPERA_REINTENTO}s...")
-                await asyncio.sleep(ESPERA_REINTENTO)
+                wait = min(2 ** intento * ESPERA_REINTENTO, 120)
+                print(f"  ⚠️  Error de transporte [{type(e).__name__}] (intento {intento}/{MAX_REINTENTOS}), reintentando en {wait}s...")
+                await asyncio.sleep(wait)
     if ultimo_error:
-        raise httpx.ConnectError(f"Sin conexión tras {MAX_REINTENTOS} intentos: {ultimo_error}")
+        raise type(ultimo_error)(f"Sin conexión tras {MAX_REINTENTOS} intentos: {ultimo_error}")
     # 429 o 5xx persistente tras todos los reintentos
     ultima_resp.raise_for_status()
 
@@ -231,13 +253,24 @@ async def _main():
     # Cache: path_display del cliente → path_display de la carpeta PSYCHOLOGY final
     cache_destino: dict[str, str | None] = {}
 
+    if DRY_RUN:
+        print("  🧪  DRY_RUN=true — las subidas a Dropbox serán simuladas (sin tráfico real)\n")
+
+    limite = LIMIT if LIMIT > 0 else total
+    procesados_en_sesion = 0
+
     for i, row in enumerate(df.to_dicts(), start=1):
+        if procesados_en_sesion >= limite:
+            print(f"\n  🛑  LIMIT={LIMIT} alcanzado, deteniendo.")
+            break
+
         nombre_audio = row["file_name"]
         path_display = row["path_display"]
 
         if nombre_audio in ya_subidos:
             continue
 
+        procesados_en_sesion += 1
         print(f"[{i}/{total}] {nombre_audio}")
 
         # Validar que path_display exista
@@ -268,8 +301,8 @@ async def _main():
                     destino_final = await obtener_o_crear_carpeta_psychology(token, recordings, namespace_id) if recordings else None
                 else:
                     raise
-            except httpx.ConnectError as e:
-                print(f"  ❌ Sin conexión al listar carpeta: {e}")
+            except httpx.TransportError as e:
+                print(f"  ❌ Error de transporte al listar carpeta [{type(e).__name__}]: {e}")
                 resultados.append({**row, "estado": "error_red", "destino_dropbox": None})
                 continue
             cache_destino[path_display] = destino_final
@@ -287,6 +320,12 @@ async def _main():
             contenido = f.read()
 
         # Subir a la carpeta Psychology
+        if DRY_RUN:
+            destino_simulado = f"{destino_final.rstrip('/')}/{nombre_audio}"
+            print(f"  🧪  [DRY_RUN] Simularía subida → {destino_simulado}")
+            resultados.append({**row, "estado": "dry_run", "destino_dropbox": destino_simulado})
+            continue
+
         print(f"  ⬆️  Subiendo a Dropbox: {destino_final}")
         try:
             resultado_upload = await subir_a_dropbox(token, destino_final, nombre_audio, contenido, namespace_id)
@@ -294,8 +333,8 @@ async def _main():
             print(f"  ✅ Subido: {destino}")
             resultados.append({**row, "estado": "subido", "destino_dropbox": destino})
 
-        except httpx.ConnectError as e:
-            print(f"  ❌ Sin conexión al subir archivo: {e}")
+        except httpx.TransportError as e:
+            print(f"  ❌ Error de transporte al subir [{type(e).__name__}]: {e}")
             resultados.append({**row, "estado": "error_red", "destino_dropbox": None})
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 401:
@@ -317,7 +356,20 @@ async def _main():
 
 
 def run() -> None:
-    asyncio.run(_main())
+    global _peticiones_dropbox
+    for intento_paso in range(1, MAX_REINTENTOS_PASO + 1):
+        _peticiones_dropbox = 0  # reiniciar contador de peticiones en cada intento
+        try:
+            asyncio.run(_main())
+            return
+        except Exception as e:
+            if intento_paso < MAX_REINTENTOS_PASO:
+                print(f"\n  ❌  Error inesperado [{type(e).__name__}]: {e}")
+                print(f"  ⏳  Esperando {ESPERA_PASO}s antes de reintentar el step "
+                      f"(intento {intento_paso}/{MAX_REINTENTOS_PASO})...")
+                time.sleep(ESPERA_PASO)
+            else:
+                raise
 
 
 if __name__ == "__main__":
