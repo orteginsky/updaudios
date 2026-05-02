@@ -40,3 +40,5 @@ credentials
 scripts/
 scripts
 check_requirements
+logs.txt
+*.csv

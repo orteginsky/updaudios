@@ -1,0 +1,115 @@
+Reporte generado: 2026-03-17 10:14:25
+Cargando archivos...
+
+============================================================
+  0. RESUMEN GENERAL
+============================================================
+  Audios totales en el sistema (mapeo + dismatch)      48109
+  Audios en mapeo_audios.csv                           42917
+  Audios sin match (dismatch)                          5192
+  Audios en resultado_final.csv                        41241
+  Audios perdidos entre runs (mapeo → resultado)       0
+  Subidos exitosamente                                 40527
+  Tasa de éxito (subidos / resultado)                  98.3%
+  Tasa de éxito (subidos / mapeo)                      94.4%
+  Sin subcarpeta Recordings                            684
+  Sin path_display                                     23
+  No encontrado local                                  7
+  Otros errores                                        0
+  Clientes únicos en resultado                         8126
+  Clientes con al menos 1 subido                       7932
+  Carpetas destino únicas en Dropbox                   7930
+
+============================================================
+  1. COBERTURA POR CLIENTE
+============================================================
+  Clientes con subida completa : 7926 (97.5%)
+  Clientes con subida parcial  : 7 (0.1%)
+  Clientes sin ningún subido   : 194   (2.4%)
+
+============================================================
+  2. CLIENTES SIN SUBIDA COMPLETA (parcial o ninguno)
+============================================================
+  Total clientes incompletos: 201
+  Top 10 por audios pendientes:
+    Esquibel Loera Patricia; Renteria Hernandez V     20 pendientes  (0.0% subidos)
+    Maria Del Socorro García | Ricardo Araujo Gue     19 pendientes  (0.0% subidos)
+    JUAN MARCIAL MAGANDA                              18 pendientes  (0.0% subidos)
+    Jose Ramon Carrera Evangelista : Elena Landa      16 pendientes  (0.0% subidos)
+    Carrillo Piñon Edgar Vilici                       15 pendientes  (0.0% subidos)
+    CONSUELO HERNANDEZ PENA                           14 pendientes  (0.0% subidos)
+    Reina Pompeya Arias Martinez                       1 pendientes  (92.3% subidos)
+    Anabel Cabrera Rodriguez ; Guillermo Molohua      12 pendientes  (0.0% subidos)
+    FULLY RFA CALL Yolanda Espinosa Guzmán            12 pendientes  (0.0% subidos)
+    Henry Antonio Galvez Gutierrez ; Vaneska Mari      1 pendientes  (91.7% subidos)
+
+============================================================
+  3. SIN SUBCARPETA RECORDINGS
+============================================================
+  Total audios sin Recordings : 684
+  Clientes afectados          : 189
+  Top 10 clientes afectados:
+    Esquibel Loera Patricia; Renteria Hernandez Victor    20 audios
+    Maria Del Socorro García | Ricardo Araujo Guerrero    19 audios
+    JUAN MARCIAL MAGANDA                                  18 audios
+    Jose Ramon Carrera Evangelista : Elena Landa Hurta    16 audios
+    Carrillo Piñon Edgar Vilici                           15 audios
+    CONSUELO HERNANDEZ PENA                               14 audios
+    Anabel Cabrera Rodriguez ; Guillermo Molohua Varga    12 audios
+    FULLY RFA CALL Yolanda Espinosa Guzmán                12 audios
+    Almaraz Benitez  Brenda & Rodarte Vielma Jose Luis    11 audios
+    Garcia, Eduardo                                       11 audios
+
+============================================================
+  4. DISTRIBUCIÓN TEMPORAL
+============================================================
+  Periodos con registros: 28
+  Desde: 2023-12  Hasta: 2026-03
+  Periodo con más audios: 2025-10 (2984 audios)
+  Audios por año:
+    2023:     15 audios
+    2024:  14703 audios
+    2025:  24749 audios
+    2026:   1774 audios
+
+============================================================
+  5. DISMATCH — CLIENTES SIN MATCH
+============================================================
+  Total audios sin match: 5192
+  Clientes únicos sin match: 1050
+  Top 10 clientes con más audios sin match:
+                                                         518 audios
+    MARIA DE JESUS NARANJO OROZCO GERARDO GONZALEZ MOR    35 audios
+    MARIA ALEJANDRA JUAREZ GARCIA JIMMY DOMINGUEZ MART    28 audios
+    MARIA DE LA CRUZ CARDENAS ROSALES                     23 audios
+    ROGELIO SANCHEZ HERRERA VALENTINA ARROLLO             22 audios
+    MERCEDES REYES POLITO JAIME GONZALEZ AGUIRRE          21 audios
+    LEOBARDO PORRAS ADRIANA GUZMAN GARCIA                 20 audios
+    MARIA DEL ROSARIO RODRIGUEZ CARILLO EDGAR ORLANDO     20 audios
+    MARCO ANTONIO GASCA MORENO MARISA MARTINEZ SERNA      20 audios
+    ISAEL GUADALUPE CARRERA ARELLANO ELODIO CARRERA NA    20 audios
+
+============================================================
+  6. CARPETAS DROPBOX — DISTRIBUCIÓN DE AUDIOS
+============================================================
+  Carpetas destino únicas          : 7930
+  Carpetas con solo 1 audio        : 1353  (17.1%)
+  Carpetas con 5 o más audios      : 3519
+  Carpetas con 10 o más audios     : 1021
+
+  Top 15 carpetas con más audios:
+      40  /Open Cases/Open Cases/Marco Antonio Guerrero Navarro ; Beatriz Janeth Salazar Silva/9 RECORDINGS ; ATTORNEY NOTES/PSYCH
+      39  /Open Cases/Rosa Ma Ramirez Zavala & Martin Hernandez Lopez/9 Recordings ; Attorney notes/PSYCHOLOGISTS
+      39  /Open Cases/Open Cases/Alejandra Altamirano Altamirano ; Abel Cruz Ramos/9 RECORDINGS ; ATTORNEY NOTES/PSYCH
+      38  /Open Cases/Open Cases/Maria Guadalupe Rodriguez Vargas ; Jaime Rodriguez Iñiguez/10 Recordings ; Attorney notes/PSYCHOLOGISTS
+      35  /Open Cases/Open Cases/Ruben Alcantar Bucio; Ma Gricelda Cerritos Vazquez/10 Recordings ; Attorney notes/PSYCH
+      35  /Open Cases/Open Cases/Jose Alberto Moltanban Tapia ; Natividad Santiago Peredo/10 Recordings ; Attorney notes/PSYCH
+      34  /Open Cases/Open Cases/Alba Arcely Mata ; Baldomero Nieto Delgado/10 Recordings ; Attorney notes/PSYCHOLOGISTS
+      34  /Open Cases/Open Cases/Ernestina Saucedo Mendoza ; Jose Luis Palafox Saucedo/10 Recordings ; Attorney notes/PSYCHOLOGISTS
+      34  /Open Cases/Open Cases/Sandra Aquino Manuel - Felipe Lopez Martinez/9 RECORDINGS ; ATTORNEY NOTES/PSYCHOLOGISTS
+      33  /Open Cases/Open Cases/CASES_2025/Octubre/Angelica Venegas Bruno ; Humberto Rodriguez Castro/9 RECORDINGS ; ATTORNEY NOTES/PSYCHOLOGY
+      32  /J Francisco Araujo Ramirez ;Maria Oliva Mercado/10 Recordings ; Attorney notes/PSYCHOLOGISTS
+      32  /Open Cases/Open Cases/Yolonda Leonila Gijon Cano ; Orlando Ramirez Gonzalez/9 RECORDINGS ; ATTORNEY NOTES/PSYCHOLOGY
+      31  /Open Cases/Open Cases/CASES_2025/Septiembre/Gregorio Hernandez Zuniga ; Rocio Medellin Rios/9 RECORDINGS ; ATTORNEY NOTES/PSYCHOLOGY
+      30  /Open Cases/Open Cases/cases_2025/Agosto/Marcelina Alonso Trejo ; German Mendoza Huerta/9 RECORDINGS ; ATTORNEY NOTES/PSYCHOLOGY
+      29  /Open Cases/Open Cases/Zenaida Solis Lara/10 Recordings ; Attorney notes/PSYCHOLOGISTS

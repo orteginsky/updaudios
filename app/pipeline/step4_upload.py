@@ -276,14 +276,14 @@ async def _main():
         # Validar que path_display exista
         if not path_display:
             print("  ⚠️  path_display vacío, saltando.")
-            resultados.append({**row, "estado": "sin_path_display", "destino_dropbox": None})
+            resultados.append({**row, "estado": "sin_path_display", "destino_dropbox": ""})
             continue
 
         # Verificar existencia del archivo local
         local_path = get_local_audio_path(row["path"], nombre_audio)
         if not os.path.exists(local_path):
             print(f"  ⚠️  Archivo no encontrado en: {local_path}")
-            resultados.append({**row, "estado": "no_encontrado_local", "destino_dropbox": None})
+            resultados.append({**row, "estado": "no_encontrado_local", "destino_dropbox": ""})
             continue
 
         # Resolver carpeta destino final (Recordings → Psychology) con caché
@@ -303,7 +303,7 @@ async def _main():
                     raise
             except httpx.TransportError as e:
                 print(f"  ❌ Error de transporte al listar carpeta [{type(e).__name__}]: {e}")
-                resultados.append({**row, "estado": "error_red", "destino_dropbox": None})
+                resultados.append({**row, "estado": "error_red", "destino_dropbox": ""})
                 continue
             cache_destino[path_display] = destino_final
 
@@ -311,7 +311,7 @@ async def _main():
 
         if not destino_final:
             print(f"  ⚠️  Sin subcarpeta 'Recordings' en: {path_display}")
-            resultados.append({**row, "estado": "sin_subcarpeta_recordings", "destino_dropbox": None})
+            resultados.append({**row, "estado": "sin_subcarpeta_recordings", "destino_dropbox": ""})
             continue
 
         # Leer audio desde el sistema de archivos local
@@ -335,7 +335,7 @@ async def _main():
 
         except httpx.TransportError as e:
             print(f"  ❌ Error de transporte al subir [{type(e).__name__}]: {e}")
-            resultados.append({**row, "estado": "error_red", "destino_dropbox": None})
+            resultados.append({**row, "estado": "error_red", "destino_dropbox": ""})
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 401:
                 token = await auth_service.get_valid_token(force_refresh=True)
@@ -345,9 +345,12 @@ async def _main():
                 resultados.append({**row, "estado": "subido", "destino_dropbox": destino})
             else:
                 print(f"  ❌ Error Dropbox HTTP {e.response.status_code}: {e.response.text}")
-                resultados.append({**row, "estado": f"error_dropbox_{e.response.status_code}", "destino_dropbox": None})
+                resultados.append({**row, "estado": f"error_dropbox_{e.response.status_code}", "destino_dropbox": ""})
 
-    df_resultado = pl.DataFrame(resultados) if resultados else pl.DataFrame()
+    df_resultado = (
+        pl.DataFrame(resultados).with_columns(pl.col("destino_dropbox").cast(pl.Utf8))
+        if resultados else pl.DataFrame()
+    )
     df_resultado.write_csv(PATH_OUTPUT)
 
     subidos = df_resultado.filter(pl.col("estado") == "subido").height if resultados else 0
